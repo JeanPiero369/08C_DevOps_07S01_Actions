@@ -17,4 +17,5 @@ jobs:
     steps:
       - name: Deploy Model
         run: echo "Deploy Model to AWS in CD Pipeline"
+    
     needs: model-ci
