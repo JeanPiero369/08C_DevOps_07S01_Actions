@@ -11,6 +11,7 @@ jobs:
     steps:
       - name: Build Model
         run: echo "Build Model in CI Pipeline"
+        
   model-cd:
     runs-on: ubuntu-latest
     steps:
