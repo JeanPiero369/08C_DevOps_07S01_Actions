@@ -42,19 +42,33 @@ jobs:       # ← todos los jobs van anidados aquí
           pip install -r requirements.txt
 
       # STEP 5: Run tests
-      - name: Run tests
+      # STEP 5: Run tests with coverage gate
+      - name: Run tests with coverage gate
         run: |
           export PYTHONPATH="${PYTHONPATH}:$(pwd)"
-          pytest -q
+          pytest -q --junitxml=report.xml \
+            --cov --cov-report=term-missing --cov-report=xml \
+            --cov-fail-under=80
 
-      # STEP 6: Create build tag  ← el step que alimenta outputs.build_tag
+      # STEP 6: Upload test and coverage reports
+      - name: Upload test and coverage reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-report
+          path: |
+            report.xml
+            coverage.xml
+          if-no-files-found: warn
+
+      # STEP 7: Create build tag  ← el step que alimenta outputs.build_tag
       - name: Compute build tag
         id: meta
         run: |
           TS=$(date +%Y%m%d-%H%M%S)
           echo "tag=${TS}-${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
 
-      # STEP 7: Save artifact
+      # STEP 8: Save artifact
       - name: Save artifact (sample log)
         run: |
           echo "Build tag: ${{ steps.meta.outputs.tag }}" > build-info.txt
@@ -63,6 +77,21 @@ jobs:       # ← todos los jobs van anidados aquí
         with:
           name: build-info
           path: build-info.txt
+
+      - name: Publish summary
+        if: always()                         # también cuando fallan los tests
+        run: |
+          {
+            echo "## 🧪 Resultado del job test"
+            echo ""
+            echo "| Campo | Valor |"
+            echo "|---|---|"
+            echo "| Build tag | \`${{ steps.meta.outputs.tag }}\` |"
+            echo "| Python | $(python --version) |"
+            echo "| Tests | $(grep -o 'tests="[0-9]*"' report.xml | head -1) |"
+            echo "| Fallos | $(grep -o 'failures="[0-9]*"' report.xml | head -1) |"
+            echo "| Cobertura | $(python -c "import xml.etree.ElementTree as ET; print(f\"{float(ET.parse('coverage.xml').getroot().get('line-rate'))*100:.0f}%\")" 2>/dev/null || echo n/a) (mínimo 80%) |"
+          } >> "$GITHUB_STEP_SUMMARY"
   package:
     needs: test              # Dependencia: espera a que termine 'test'
     runs-on: ubuntu-latest
