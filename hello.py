@@ -9,7 +9,6 @@ def add(a: int, b: int) -> int:
 def is_even(n: int) -> bool:
     return n % 2 == 0
 
-
 if __name__ == "__main__":
     print(greet("GitHub Actions"))
     print(f"2 + 3 = {add(2, 3)}")
