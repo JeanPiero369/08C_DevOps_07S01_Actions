@@ -91,6 +91,7 @@ jobs:       # ← todos los jobs van anidados aquí
             echo "| Tests | $(grep -o 'tests="[0-9]*"' report.xml | head -1) |"
             echo "| Fallos | $(grep -o 'failures="[0-9]*"' report.xml | head -1) |"
             echo "| Cobertura | $(python -c "import xml.etree.ElementTree as ET; print(f\"{float(ET.parse('coverage.xml').getroot().get('line-rate'))*100:.0f}%\")" 2>/dev/null || echo n/a) (mínimo 80%) |"
+            echo "| Estado | ${{ job.status }} |"
           } >> "$GITHUB_STEP_SUMMARY"
   package:
     needs: test              # Dependencia: espera a que termine 'test'
